@@ -6,8 +6,8 @@ o projeto utiliza várias tecnologias e padrões modernos onde algumas são arqu
 # Imagens do App
 <img src="https://github.com/gleisonTi/GitHubUsers/assets/26177219/a644038c-d14c-4f82-a263-ce699d1a0dd6" alt="Descrição da imagem" width="300">
 <img src="https://github.com/gleisonTi/GitHubUsers/assets/26177219/c99858f7-95ce-4e03-9181-82f57393c09f" alt="Descrição da imagem" width="300">
-# Clonando e Inicializando o App no Android Studio
- 
+
+# Clonando e Inicializando o App no Android Studio 
 Para clonar e inicializar o aplicativo no Android Studio, siga as etapas abaixo:
 
 Certifique-se de ter o Android Studio instalado em seu computador. Caso não tenha, faça o download e instale-o a partir do site oficial do Android Studio.
