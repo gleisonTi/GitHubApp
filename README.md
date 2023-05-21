@@ -5,6 +5,8 @@ o projeto utiliza várias tecnologias e padrões modernos onde algumas são arqu
 
 # Imagens do App
 ![Screenshot_1684710917](https://github.com/gleisonTi/GitHubUsers/assets/26177219/a644038c-d14c-4f82-a263-ce699d1a0dd6 | width=200 height=400)
+<img src="https://github.com/gleisonTi/GitHubUsers/assets/26177219/a644038c-d14c-4f82-a263-ce699d1a0dd6" alt="Descrição da imagem" width="300">
+
 ![Screenshot_1684711328](https://github.com/gleisonTi/GitHubUsers/assets/26177219/c99858f7-95ce-4e03-9181-82f57393c09f | width=200 height=400)
 
 
