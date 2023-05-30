@@ -17,7 +17,6 @@ import com.gleisonti.githubusers.model.models.repomodels.Repository
 import com.gleisonti.githubusers.model.models.usermodels.SearchUserResponse
 import com.gleisonti.githubusers.model.models.usermodels.UserSearchItem
 import com.gleisonti.githubusers.model.repository.GitHubRepository
-import com.gleisonti.githubusers.presenter.listusers.UserList
 import com.gleisonti.githubusers.presenter.listusers.UserListViewModel
 import com.gleisonti.githubusers.presenter.scafoldnav.NavigationView
 import io.mockk.coEvery
@@ -28,7 +27,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.Mockito.`when`
 
 /**
  * Instrumented test, which will execute on an Android device.
