@@ -107,7 +107,6 @@ class ScaffoldComposeTest {
 
     }
 
-
     @Test
     fun test_search_user(){
         composeTestRule.onNode(hasText("Lista De Usuários")).assertIsDisplayed()
