@@ -5,7 +5,7 @@ data class UserDetail(
     val company: String? = "",
     val followers: Int? = 0,
     val location: String? = "",
-    val login: String? = "login de usuario",
+    val login: String? = "user",
     val name: String? = "Teste de Usuario",
     val public_repos: Int? = 0,
 )

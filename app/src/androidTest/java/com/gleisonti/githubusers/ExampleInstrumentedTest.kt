@@ -1,32 +1,34 @@
 package com.gleisonti.githubusers
 
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.Text
-import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.*
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithText
-import androidx.navigation.NavHostController
-import androidx.paging.Pager
+import androidx.navigation.compose.ComposeNavigator
+import androidx.navigation.testing.TestNavHostController
 import androidx.paging.PagingData
-import androidx.paging.PagingSource
-import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.itemContentType
-import androidx.paging.compose.itemKey
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.gleisonti.githubusers.domain.paging.repositories.RepositoriesRemoteDataSourceImpl
+import com.gleisonti.githubusers.domain.paging.users.UsersRemoteDataSourceImpl
+import com.gleisonti.githubusers.helper.ApiResponse
+import com.gleisonti.githubusers.model.models.repomodels.Repository
+import com.gleisonti.githubusers.model.models.usermodels.SearchUserResponse
 import com.gleisonti.githubusers.model.models.usermodels.UserSearchItem
-import com.gleisonti.githubusers.presenter.MainActivity
+import com.gleisonti.githubusers.model.repository.GitHubRepository
+import com.gleisonti.githubusers.presenter.listusers.UserList
+import com.gleisonti.githubusers.presenter.listusers.UserListViewModel
+import com.gleisonti.githubusers.presenter.scafoldnav.NavigationView
 import io.mockk.coEvery
-import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.Mockito.`when`
 
 /**
  * Instrumented test, which will execute on an Android device.
@@ -36,27 +38,222 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class ScaffoldComposeTest {
     @get:Rule
-    val composeTestRule = createAndroidComposeRule<MainActivity>()
-    private lateinit var pagingSource: PagingSource<Int, UserSearchItem>
+    val composeTestRule = createComposeRule()
+
+    private lateinit var gitHubRepository: GitHubRepository
+    private lateinit var usersRemoteDataSourceImpl: UsersRemoteDataSourceImpl
+    private lateinit var repositoriesRemoteDataSourceImpl: RepositoriesRemoteDataSourceImpl
+    private lateinit var userListViewModel: UserListViewModel
+    lateinit var navController: TestNavHostController
 
     @Before
     fun setup() {
-        pagingSource = mockk()
+        gitHubRepository = mockk(relaxed = true)
+        usersRemoteDataSourceImpl = mockk()
+        repositoriesRemoteDataSourceImpl = mockk()
+        userListViewModel = UserListViewModel(
+            gitHubRepository, usersRemoteDataSourceImpl, repositoriesRemoteDataSourceImpl
+        )
+
+        // mock dos dados
+        val mockResponse = ApiResponse.Success(
+            SearchUserResponse(
+                incomplete_results = false,
+                items = mockUserListData(),
+                total_count = mockUserListData().size
+            )
+        )
+
+        val mockpagingUser = PagingData.from(mockUserListData())
+        val mockpagingRepository = PagingData.from(mockRepoListData())
+        coEvery { gitHubRepository.getUserList(1,100) } returns mockResponse
+        coEvery { usersRemoteDataSourceImpl.getUsers("") } returns flowOf(mockpagingUser)
+        coEvery { usersRemoteDataSourceImpl.getUsers("user") } returns flowOf(mockpagingUser)
+        coEvery { userListViewModel.getUserList("") } returns flowOf(mockpagingUser)
+        coEvery { repositoriesRemoteDataSourceImpl.getRepositories("user") } returns flowOf(mockpagingRepository)
+        coEvery { userListViewModel.getRepositoryList("user1") } returns flowOf(mockpagingRepository)
+
+        composeTestRule.setContent {
+            navController = TestNavHostController(LocalContext.current)
+            navController.navigatorProvider.addNavigator(ComposeNavigator())
+            NavigationView(navController,userListViewModel)
+        }
+    }
+
+    @Test
+    fun test_load_list_user(){
+        composeTestRule.onNode(hasText("Lista De Usuários")).assertIsDisplayed()
+        composeTestRule.waitForIdle()
+
+        mockUserListData().forEach {
+            composeTestRule.onNodeWithText(it.login).assertIsDisplayed()
+        }
+
+    }
+
+    @Test
+    fun test_click_user_and_navigate(){
+
+        composeTestRule.onNode(hasText("Lista De Usuários")).assertIsDisplayed()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("User 1").performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNode(hasText("Detalhe do Usuário")).assertIsDisplayed()
+        mockRepoListData().forEach {
+            composeTestRule.onNodeWithText(it.name.toString()).assertIsDisplayed()
+        }
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithContentDescription("Back").performClick()
+
     }
 
 
     @Test
-    fun testUserListView() = runBlockingTest {
-        composeTestRule.onNodeWithText("Lista De Usuários").assertIsDisplayed()
+    fun test_search_user(){
+        composeTestRule.onNode(hasText("Lista De Usuários")).assertIsDisplayed()
+
+        composeTestRule.onNodeWithTag("field").assert(hasText(""))
+
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithTag("field").performTextInput("user")
     }
 
-    @Test
-    fun testNavigation() {
+    fun mockUserListData() = mutableStateListOf(
+        UserSearchItem(
+            avatar_url = "https://avatars.githubusercontent.com/u/432763?v=4",
+            login = "User 1",
+            id = 1
+        ),
+        UserSearchItem(
+            avatar_url = "https://avatars.githubusercontent.com/u/432763?v=4",
+            login = "User 2",
+            id = 2
+        ),
+        UserSearchItem(
+            avatar_url = "https://avatars.githubusercontent.com/u/432763?v=4",
+            login = "User 3",
+            id = 3
+        ),
+        UserSearchItem(
+            avatar_url = "https://avatars.githubusercontent.com/u/432763?v=4",
+            login = "User 4",
+            id = 4
+        ),
+    )
 
-        composeTestRule.onNodeWithText("Screen 1").performClick()
+    fun mockRepoListData() = mutableStateListOf(
+        Repository(
+            forksCount = 20,
+            stargazersCount = 10,
+            language = "Java",
+            name = "Repo1",
+            id = 1
+        ),
+        Repository(
+            forksCount = 20,
+            stargazersCount = 10,
+            language = "Java",
+            name = "Repo2",
+            id = 2
+        ),
+        Repository(
+            forksCount = 20,
+            stargazersCount = 10,
+            language = "Java",
+            name = "Repo3",
+            id = 3
+        ),
+        Repository(
+            forksCount = 20,
+            stargazersCount = 10,
+            language = "Java",
+            name = "Repo4",
+            id = 4
+        )
+    )
 
-        // Verifique se a navegação para a segunda tela ocorreu corretamente
-        composeTestRule.onNodeWithText("Screen 2").assertIsDisplayed()
-    }
+//    @Test
+//    fun testScaffoldWithLazyColumn() {
+//        val itemsList = mutableStateListOf(
+//            UserSearchItem(
+//                avatar_url = "https://avatars.githubusercontent.com/u/432763?v=4",
+//                login = "User 1",
+//                id = 1
+//            ),
+//            UserSearchItem(
+//                avatar_url = "https://avatars.githubusercontent.com/u/432763?v=4",
+//                login = "User 2",
+//                id = 2
+//            ),
+//            UserSearchItem(
+//                avatar_url = "https://avatars.githubusercontent.com/u/432763?v=4",
+//                login = "User 3",
+//                id = 3
+//            ),
+//            UserSearchItem(
+//                avatar_url = "https://avatars.githubusercontent.com/u/432763?v=4",
+//                login = "User 4",
+//                id = 4
+//            ),
+//
+//            )
+//
+//        composeTestRule.setContent {
+//            MaterialTheme {
+//                Scaffold(
+//                    topBar = {
+//                        TopAppBar(
+//                            title = { Text(text = "My App") },
+//                        )
+//                    },
+//                ) { innerPadding ->
+//                    LazyColumn(contentPadding = innerPadding) {
+//                        items(itemsList) { item ->
+//                            Card(
+//                                elevation = 4.dp,
+//                                modifier = Modifier
+//                                    .fillMaxWidth()
+//                                    .wrapContentHeight()
+//                            ) {
+//                                Row(
+//                                    modifier = Modifier
+//                                        .fillMaxWidth()
+//                                        .padding(8.dp)
+//
+//                                ) {
+//                                    AsyncImage(
+//                                        model = ImageRequest.Builder(LocalContext.current)
+//                                            .data(item.avatar_url).crossfade(true).build(),
+//                                        placeholder = painterResource(R.drawable.ic_launcher_background),
+//                                        contentDescription = "Image User ${item.id}",
+//                                        contentScale = ContentScale.Crop,
+//                                        modifier = Modifier
+//                                            .clip(CircleShape)
+//                                            .width(42.dp)
+//                                            .height(42.dp)
+//                                    )
+//                                    Text(
+//                                        text = item.login,
+//                                        fontSize = 24.sp,
+//                                        modifier = Modifier
+//                                            .padding(start = 12.dp)
+//                                            .align(Alignment.CenterVertically)
+//                                    )
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//
+//        itemsList.forEach { item ->
+//            composeTestRule.onNode(hasText(item.login)).assertIsDisplayed()
+//            composeTestRule.onNode(hasContentDescription("Image User ${item.id}"))
+//                .assertIsDisplayed()
+//        }
+//    }
+
 
 }

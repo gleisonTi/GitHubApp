@@ -25,8 +25,6 @@ class UserListViewModel @Inject constructor(
 
     val currentQuery = MutableStateFlow("")
     val users = currentQuery
-        .debounce(2000)
-        .distinctUntilChanged()
         .flatMapLatest {
         getUserList(it)
     }
